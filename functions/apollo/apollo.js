@@ -22,11 +22,11 @@ const authors = [
 
 const resolvers = {
     Query: {
-        hello: (root, args, { context }) => {
-            if (context.clientContext && context.clientContext.user) {
-                return `Hello, ${
-                    context.clientContext.user.user_metadata.full_name
-                }!`;
+        hello: (root, args, { clientContext }) => {
+            console.log(clientContext);
+
+            if (clientContext && clientContext.user) {
+                return `Hello, ${clientContext.user.user_metadata.full_name}!`;
             }
             return "Hello, world!";
         },
@@ -47,7 +47,8 @@ const server = new ApolloServer({
     typeDefs,
     resolvers,
     context: ({ context }) => ({
-        context
+        context,
+        clientContext: context.clientContext
     })
 });
 

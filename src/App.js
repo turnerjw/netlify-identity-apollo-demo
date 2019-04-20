@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import netlifyIdentity from "netlify-identity-widget";
 import ApolloClient, { gql } from "apollo-boost";
 import { ApolloProvider, Query } from "react-apollo";
@@ -25,36 +25,44 @@ const helloQuery = gql`
     }
 `;
 
-const LambdaDemo = () => (
-    <ApolloProvider client={client}>
-        <Query query={helloQuery}>
-            {({ data, loading }) => (
-                <div>
-                    A greeting from the server:{" "}
-                    {loading ? "loading" : data.hello}
-                </div>
-            )}
-        </Query>
-    </ApolloProvider>
-);
+function LambdaDemo() {
+    return (
+        <ApolloProvider client={client}>
+            <Query query={helloQuery}>
+                {({ data, loading, refetch }) => {
+                    netlifyIdentity.on("login", () => refetch());
+                    netlifyIdentity.on("logout", () => refetch());
+                    return (
+                        <div>
+                            A greeting from the server:{" "}
+                            {loading ? "loading" : data.hello}
+                        </div>
+                    );
+                }}
+            </Query>
+        </ApolloProvider>
+    );
+}
 
-class App extends Component {
-    render() {
-        return (
-            <div className="App">
-                <header className="App-header">
-                    <img src={logo} className="App-logo" alt="logo" />
-                    <p>
-                        Edit <code>src/App.js</code> and save to reload.
-                    </p>
-                    <button onClick={() => netlifyIdentity.open()}>
-                        Login
-                    </button>
-                    <LambdaDemo />
-                </header>
-            </div>
-        );
-    }
+function App() {
+    const [userLoggedIn, setUserLoggedIn] = useState(false);
+    netlifyIdentity.on("login", () => setUserLoggedIn(true));
+    netlifyIdentity.on("logout", () => setUserLoggedIn(false));
+
+    return (
+        <div className="App">
+            <header className="App-header">
+                <img src={logo} className="App-logo" alt="logo" />
+                <p>
+                    Edit <code>src/App.js</code> and save to reload.
+                </p>
+                <button onClick={() => netlifyIdentity.open()}>
+                    {userLoggedIn ? "Logout" : "Login"}
+                </button>
+                <LambdaDemo />
+            </header>
+        </div>
+    );
 }
 
 export default App;
