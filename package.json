@@ -5,6 +5,7 @@
   "dependencies": {
     "apollo-server-lambda": "^2.4.8",
     "graphql": "^14.2.1",
+    "netlify-identity-widget": "^1.5.2",
     "node-fetch": "^2.3.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
