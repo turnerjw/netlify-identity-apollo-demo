@@ -1,28 +1,42 @@
 import React, { Component } from "react";
 import netlifyIdentity from "netlify-identity-widget";
+import ApolloClient, { gql } from "apollo-boost";
+import { ApolloProvider, Query } from "react-apollo";
 import logo from "./logo.svg";
 import "./App.css";
 
-const netlifyAuth = {
-    isAuthenticated: false,
-    user: null,
-    authenticate(callback) {
-        this.isAuthenticated = true;
-        netlifyIdentity.open();
-        netlifyIdentity.on("login", user => {
-            this.user = user;
-            callback(user);
-        });
-    },
-    signout(callback) {
-        this.isAuthenticated = false;
-        netlifyIdentity.logout();
-        netlifyIdentity.on("logout", () => {
-            this.user = null;
-            callback();
-        });
+const client = new ApolloClient({
+    uri: "/.netlify/functions/apollo",
+    request: async operation => {
+        if (netlifyIdentity.currentUser()) {
+            const token = await netlifyIdentity.currentUser().jwt();
+            operation.setContext({
+                headers: {
+                    authorization: token ? `Bearer ${token}` : ""
+                }
+            });
+        }
     }
-};
+});
+
+const helloQuery = gql`
+    {
+        hello
+    }
+`;
+
+const LambdaDemo = () => (
+    <ApolloProvider client={client}>
+        <Query query={helloQuery}>
+            {({ data, loading }) => (
+                <div>
+                    A greeting from the server:{" "}
+                    {loading ? "loading" : data.hello}
+                </div>
+            )}
+        </Query>
+    </ApolloProvider>
+);
 
 class App extends Component {
     render() {
@@ -33,17 +47,10 @@ class App extends Component {
                     <p>
                         Edit <code>src/App.js</code> and save to reload.
                     </p>
-                    <a
-                        className="App-link"
-                        href="https://reactjs.org"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Learn React
-                    </a>
                     <button onClick={() => netlifyIdentity.open()}>
                         Login
                     </button>
+                    <LambdaDemo />
                 </header>
             </div>
         );
